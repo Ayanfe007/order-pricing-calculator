@@ -1,0 +1,16 @@
+0
+2
+Rice
+-50
+12000
+0
+2
+Beans
+abc
+8000
+3
+vip
+standard
+SAVE50
+Z
+A
