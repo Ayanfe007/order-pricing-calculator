@@ -46,8 +46,6 @@ Test run finished after 159 ms
 [         0 tests failed          ]
 ```
 
-\* exact method name in the source is `taxIsSevenPointFivePercentOfDiscountedAmount()`.
-
 ## Coverage of the required case types
 
 | Case type   | Tests |
