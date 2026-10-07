@@ -10,9 +10,18 @@ the console input/output class (`ConsoleApp`), so every pricing rule is
 unit-testable without a keyboard - and it is tested: **15 JUnit 5 tests**
 covering normal, invalid and boundary cases (see `TEST_RESULTS.md`).
 
+**Week-02 extension:** a new `store.domain` package models the e-commerce
+order domain - `Customer`, `Product`, `Order`, `OrderItem`, `Address`,
+`Payment`, `Delivery` plus `OrderStatus` / `PaymentStatus` / `DeliveryStatus`
+enums - with encapsulated state-change validation and a bridge that re-uses
+the Week-1 pricing engine. See "Week 2 - domain model" below,
+[`DESIGN_NOTES.md`](DESIGN_NOTES.md) and
+[`docs/uml-class-diagram.svg`](docs/uml-class-diagram.svg). The full suite is
+now **29 tests** (15 pricing + 14 domain).
+
 ## Requirements
 
-- JDK 11 or newer (developed and verified on OpenJDK 11)
+- JDK 17 or newer (the Week-2 domain package uses records; verified on OpenJDK 17)
 - No build tool needed - the JUnit console launcher jar is bundled in `lib/`
 
 ## Setup, build, run, test
@@ -20,7 +29,7 @@ covering normal, invalid and boundary cases (see `TEST_RESULTS.md`).
 ```bash
 ./build.sh     # compiles src/main/java -> out/ and src/test/java -> out-test/
 ./run.sh       # starts the console app (reads from the terminal)
-./test.sh      # runs the 15 JUnit tests
+./test.sh      # runs the 29 JUnit tests (15 pricing + 14 domain)
 ```
 
 Equivalent manual commands:
@@ -103,29 +112,69 @@ every violation produces a specific `Error:` message (console) or
 |   |-- Order.java / OrderItem.java        validated input model
 |   |-- DeliveryZone.java / CustomerType.java  enums + input parsing
 |   |-- PriceBreakdown.java        immutable result object
-|   `-- ConsoleApp.java            console front-end (input + printing only)
-|-- src/test/java/store/OrderCalculatorTest.java   15 JUnit 5 tests
+|   |-- ConsoleApp.java            console front-end (input + printing only)
+|   `-- domain/                    Week-2 domain model package
+|       |-- Customer.java  Product.java  Order.java  Payment.java  Delivery.java  (classes)
+|       |-- Address.java  OrderItem.java (records)
+|       |-- OrderStatus.java  PaymentStatus.java  DeliveryStatus.java (enums)
+|       `-- DomainDemo.java        lifecycle demo (java -cp out store.domain.DomainDemo)
+|-- src/test/java/store/OrderCalculatorTest.java   15 pricing tests
+|-- src/test/java/store/domain/DomainModelTest.java 14 domain tests
+|-- docs/uml-class-diagram.svg     Week-2 UML class diagram
+|-- DESIGN_NOTES.md                design-decision notes (class vs record vs enum)
 |-- README.md                      this file
-|-- TEST_RESULTS.md                test-results report (15/15 passing)
+|-- TEST_RESULTS.md                test-results report (29/29 passing)
 |-- SAMPLE_OUTPUTS.md              sample inputs + captured outputs
 `-- DEBUGGING_NOTES.md             personal debugging notes
 ```
 
+## Week 2 - domain model (`store.domain`)
+
+The model translates the product requirements into Java objects. Selection
+rule: **classes** for entities with identity and changing state, **records**
+for immutable value snapshots, **enums** for fixed state vocabularies.
+
+| Type | Kind | Changing state / behaviour |
+|------|------|----------------------------|
+| `Customer` | class | loyalty points; email/phone/address validation |
+| `Product` | class | stock, guarded `decreaseStock`/`increaseStock` (no oversell) |
+| `Order` | class (aggregate root) | lifecycle `PENDING -> CONFIRMED -> SHIPPED -> DELIVERED`, or `-> CANCELLED`; every move validated |
+| `Payment` | class | `PENDING -> PAID` (retryable from `FAILED`), `PAID -> REFUNDED` |
+| `Delivery` | class | `PREPARING -> IN_TRANSIT -> DELIVERED/FAILED`; fee from its address zone |
+| `Address` | record | immutable; compact-constructor validation |
+| `OrderItem` | record | immutable (product, quantity) line with `lineTotal()` |
+| `OrderStatus`, `PaymentStatus`, `DeliveryStatus` | enums | fixed states; transitions guarded in the owning classes |
+
+**Relationships:** Customer 1—* Order; Order 1◆—* OrderItem; OrderItem *—1
+Product; Order 1—0..1 Payment; Order 1—0..1 Delivery; Delivery *—1 Address;
+Customer 1—1 Address. The model re-uses Week-1 types on purpose:
+`CustomerType` and `DeliveryZone` on `Customer`/`Address`, and
+`Order.priceBreakdown()` delegates to `OrderCalculator` so pricing rules stay
+in one place. Side effects travel with transitions: `addItem` reserves stock,
+`cancel` returns it and refunds a paid payment, `deliver` awards loyalty
+points. See [`docs/uml-class-diagram.svg`](docs/uml-class-diagram.svg) and
+[`DESIGN_NOTES.md`](DESIGN_NOTES.md).
+
+**Demo:** `java -cp out store.domain.DomainDemo` builds a customer, products,
+order, payment and delivery, shows a guarded refusal ("Cannot ship when order
+ORD-2026-0001 is PENDING"), then walks the happy path to DELIVERED.
+
 ## Tests
 
-`./test.sh` - expects **15 tests, 0 failures**. The full captured report,
-including which tests cover normal / boundary / invalid cases, is in
-[`TEST_RESULTS.md`](TEST_RESULTS.md). Debugging history is in
-[`DEBUGGING_NOTES.md`](DEBUGGING_NOTES.md).
+`./test.sh` - expects **29 tests, 0 failures** (15 pricing + 14 domain). The
+captured report is in [`TEST_RESULTS.md`](TEST_RESULTS.md); debugging history
+in [`DEBUGGING_NOTES.md`](DEBUGGING_NOTES.md).
 
 ## Submitting to GitHub
 
 The local repository already has an incremental commit history and the
-annotated tag `week-01` on the final commit. To publish:
+annotated tags `week-01` (Week-1 state) and `week-02` (Week-2 state) on the
+corresponding commits. To publish:
 
 ```bash
 # on github.com: create an empty repository, then:
 git remote add origin https://github.com/<your-username>/<repo-name>.git
 git push -u origin main
 git push origin week-01
+git push origin week-02
 ```

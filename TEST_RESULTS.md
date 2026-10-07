@@ -55,3 +55,19 @@ Test run finished after 159 ms
 | Invalid     | `negativePriceIsRejected`, `zeroAndHugeQuantitiesAreRejected`, `emptyOrderIsRejected`, `unknownPromoIsIgnoredWithNote`, `badZoneAndCustomerTypeInputsAreRejected` |
 
 Re-run any time with `./test.sh`; the same tree and counters are printed to the console.
+
+## Week-2 addendum (2026-10-07)
+
+The suite now also runs `store.domain.DomainModelTest` (14 tests) on OpenJDK
+17: **29 tests found, 29 successful, 0 failed**.
+
+Domain coverage: record validation (`addressRecordRejectsBlankCity`),
+customer validation (`customerRejectsBadEmailAndPhone`,
+`loyaltyPointsRejectNegative`), stock guard (`productRejectsOversell`),
+order state machine (`addItemReservesStockAndCancelReturnsIt`,
+`confirmedOrderRejectsNewItems`, `confirmRequiresAtLeastOneItem`,
+`shipRequiresPaidPaymentAndDelivery`, `fullLifecycleReachesDeliveredAndEarnsLoyalty`,
+`deliveredOrderCannotBeCancelled`), payment machine
+(`refundOnlyPossibleWhenPaid`, `failedPaymentCanRetryThenPay`), delivery
+machine (`deliveryCannotBeDeliveredBeforeTransit`) and the Week-1 bridge
+(`priceBreakdownReusesWeek1Rules`).

@@ -1,0 +1,179 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1160 700" font-family="Segoe UI, Arial, sans-serif">
+  <defs>
+    <marker id="open" markerWidth="12" markerHeight="10" refX="11" refY="5" orient="auto">
+      <path d="M0,0 L12,5 L0,10" fill="none" stroke="#334155" stroke-width="1.6"/>
+    </marker>
+    <marker id="dash" markerWidth="12" markerHeight="10" refX="11" refY="5" orient="auto">
+      <path d="M0,0 L12,5 L0,10" fill="none" stroke="#7c3aed" stroke-width="1.6"/>
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="1160" height="700" fill="#fdf6ec"/>
+  <text x="24" y="26" font-size="17" font-weight="bold" fill="#1e293b">UML class diagram - store.domain (Week 2) + Week-1 re-use</text>
+  <text x="24" y="44" font-size="11" fill="#475569">filled diamond = composition | plain line = association with multiplicities | dashed arrow = uses / depends</text>
+
+  <!-- Customer -->
+  <g font-size="11">
+    <rect x="40" y="60" width="240" height="150" fill="#fff" stroke="#7c3aed" stroke-width="2"/>
+    <rect x="40" y="60" width="240" height="34" fill="#7c3aed"/>
+    <text x="160" y="74" text-anchor="middle" fill="#fff" font-weight="bold">Customer</text>
+    <text x="160" y="88" text-anchor="middle" fill="#ede9fe">&#171;class&#187; mutable state</text>
+    <text x="48" y="108" fill="#1e293b">- name, email, phone : String</text>
+    <text x="48" y="124" fill="#1e293b">- address : Address</text>
+    <text x="48" y="140" fill="#1e293b">- type : CustomerType (Week-1)</text>
+    <text x="48" y="156" fill="#1e293b">- loyaltyPoints : int</text>
+    <line x1="40" y1="164" x2="280" y2="164" stroke="#7c3aed"/>
+    <text x="48" y="180" fill="#1e293b">+ earnLoyaltyPoints(int)</text>
+    <text x="48" y="196" fill="#1e293b">+ validated constructor</text>
+  </g>
+
+  <!-- Address -->
+  <g font-size="11">
+    <rect x="40" y="300" width="240" height="120" fill="#fff" stroke="#2563eb" stroke-width="2"/>
+    <rect x="40" y="300" width="240" height="34" fill="#2563eb"/>
+    <text x="160" y="314" text-anchor="middle" fill="#fff" font-weight="bold">Address</text>
+    <text x="160" y="328" text-anchor="middle" fill="#dbeafe">&#171;record&#187; immutable</text>
+    <text x="48" y="348" fill="#1e293b">street, city, state : String</text>
+    <text x="48" y="364" fill="#1e293b">zone : DeliveryZone (Week-1)</text>
+    <line x1="40" y1="372" x2="280" y2="372" stroke="#2563eb"/>
+    <text x="48" y="388" fill="#1e293b">+ compact ctor validates all</text>
+  </g>
+
+  <!-- OrderStatus -->
+  <g font-size="11">
+    <rect x="40" y="520" width="240" height="110" fill="#fff" stroke="#ea580c" stroke-width="2"/>
+    <rect x="40" y="520" width="240" height="34" fill="#ea580c"/>
+    <text x="160" y="534" text-anchor="middle" fill="#fff" font-weight="bold">OrderStatus</text>
+    <text x="160" y="548" text-anchor="middle" fill="#ffedd5">&#171;enum&#187; fixed states</text>
+    <text x="48" y="568" fill="#1e293b">PENDING, CONFIRMED, SHIPPED,</text>
+    <text x="48" y="584" fill="#1e293b">DELIVERED, CANCELLED</text>
+    <line x1="40" y1="592" x2="280" y2="592" stroke="#ea580c"/>
+    <text x="48" y="608" fill="#1e293b">+ isTerminal()</text>
+  </g>
+
+  <!-- Order -->
+  <g font-size="11">
+    <rect x="420" y="60" width="260" height="200" fill="#fff" stroke="#7c3aed" stroke-width="2"/>
+    <rect x="420" y="60" width="260" height="34" fill="#7c3aed"/>
+    <text x="550" y="74" text-anchor="middle" fill="#fff" font-weight="bold">Order</text>
+    <text x="550" y="88" text-anchor="middle" fill="#ede9fe">&#171;class&#187; aggregate root</text>
+    <text x="428" y="108" fill="#1e293b">- orderId : String</text>
+    <text x="428" y="124" fill="#1e293b">- customer : Customer</text>
+    <text x="428" y="140" fill="#1e293b">- items : List&lt;OrderItem&gt;</text>
+    <text x="428" y="156" fill="#1e293b">- status : OrderStatus</text>
+    <text x="428" y="172" fill="#1e293b">- payment : Payment (0..1)</text>
+    <text x="428" y="188" fill="#1e293b">- delivery : Delivery (0..1)</text>
+    <line x1="420" y1="196" x2="680" y2="196" stroke="#7c3aed"/>
+    <text x="428" y="212" fill="#1e293b">+ addItem / confirm / ship</text>
+    <text x="428" y="228" fill="#1e293b">+ deliver / cancel (guarded)</text>
+    <text x="428" y="244" fill="#1e293b">+ priceBreakdown() bridge</text>
+  </g>
+
+  <!-- OrderItem -->
+  <g font-size="11">
+    <rect x="420" y="340" width="260" height="100" fill="#fff" stroke="#2563eb" stroke-width="2"/>
+    <rect x="420" y="340" width="260" height="34" fill="#2563eb"/>
+    <text x="550" y="354" text-anchor="middle" fill="#fff" font-weight="bold">OrderItem</text>
+    <text x="550" y="368" text-anchor="middle" fill="#dbeafe">&#171;record&#187; immutable line</text>
+    <text x="428" y="388" fill="#1e293b">product : Product</text>
+    <text x="428" y="404" fill="#1e293b">quantity : int (1..100)</text>
+    <line x1="420" y1="412" x2="680" y2="412" stroke="#2563eb"/>
+    <text x="428" y="428" fill="#1e293b">+ lineTotal()</text>
+  </g>
+
+  <!-- Product -->
+  <g font-size="11">
+    <rect x="420" y="520" width="260" height="130" fill="#fff" stroke="#7c3aed" stroke-width="2"/>
+    <rect x="420" y="520" width="260" height="34" fill="#7c3aed"/>
+    <text x="550" y="534" text-anchor="middle" fill="#fff" font-weight="bold">Product</text>
+    <text x="550" y="548" text-anchor="middle" fill="#ede9fe">&#171;class&#187; stock changes</text>
+    <text x="428" y="568" fill="#1e293b">- sku, name : String</text>
+    <text x="428" y="584" fill="#1e293b">- unitPrice : double  - stock : int</text>
+    <line x1="420" y1="592" x2="680" y2="592" stroke="#7c3aed"/>
+    <text x="428" y="608" fill="#1e293b">+ decreaseStock / increaseStock</text>
+    <text x="428" y="624" fill="#1e293b">+ validated constructor</text>
+  </g>
+
+  <!-- Payment -->
+  <g font-size="11">
+    <rect x="760" y="60" width="240" height="150" fill="#fff" stroke="#7c3aed" stroke-width="2"/>
+    <rect x="760" y="60" width="240" height="34" fill="#7c3aed"/>
+    <text x="880" y="74" text-anchor="middle" fill="#fff" font-weight="bold">Payment</text>
+    <text x="880" y="88" text-anchor="middle" fill="#ede9fe">&#171;class&#187; state machine</text>
+    <text x="768" y="108" fill="#1e293b">- method : String</text>
+    <text x="768" y="124" fill="#1e293b">- amount : double</text>
+    <text x="768" y="140" fill="#1e293b">- status : PaymentStatus</text>
+    <line x1="760" y1="148" x2="1000" y2="148" stroke="#7c3aed"/>
+    <text x="768" y="164" fill="#1e293b">+ markPaid / markFailed</text>
+    <text x="768" y="180" fill="#1e293b">+ refund (only when PAID)</text>
+  </g>
+
+  <!-- Delivery -->
+  <g font-size="11">
+    <rect x="760" y="300" width="240" height="150" fill="#fff" stroke="#7c3aed" stroke-width="2"/>
+    <rect x="760" y="300" width="240" height="34" fill="#7c3aed"/>
+    <text x="880" y="314" text-anchor="middle" fill="#fff" font-weight="bold">Delivery</text>
+    <text x="880" y="328" text-anchor="middle" fill="#ede9fe">&#171;class&#187; state machine</text>
+    <text x="768" y="348" fill="#1e293b">- destination : Address</text>
+    <text x="768" y="364" fill="#1e293b">- status : DeliveryStatus</text>
+    <line x1="760" y1="372" x2="1000" y2="372" stroke="#7c3aed"/>
+    <text x="768" y="388" fill="#1e293b">+ startTransit / markDelivered</text>
+    <text x="768" y="404" fill="#1e293b">+ markFailed / fee()</text>
+  </g>
+
+  <!-- PaymentStatus -->
+  <g font-size="11">
+    <rect x="760" y="520" width="180" height="110" fill="#fff" stroke="#ea580c" stroke-width="2"/>
+    <rect x="760" y="520" width="180" height="34" fill="#ea580c"/>
+    <text x="850" y="534" text-anchor="middle" fill="#fff" font-weight="bold">PaymentStatus</text>
+    <text x="850" y="548" text-anchor="middle" fill="#ffedd5">&#171;enum&#187;</text>
+    <text x="768" y="568" fill="#1e293b">PENDING, PAID,</text>
+    <text x="768" y="584" fill="#1e293b">REFUNDED, FAILED</text>
+  </g>
+
+  <!-- DeliveryStatus -->
+  <g font-size="11">
+    <rect x="960" y="520" width="180" height="110" fill="#fff" stroke="#ea580c" stroke-width="2"/>
+    <rect x="960" y="520" width="180" height="34" fill="#ea580c"/>
+    <text x="1050" y="534" text-anchor="middle" fill="#fff" font-weight="bold">DeliveryStatus</text>
+    <text x="1050" y="548" text-anchor="middle" fill="#ffedd5">&#171;enum&#187;</text>
+    <text x="968" y="568" fill="#1e293b">PREPARING, IN_TRANSIT,</text>
+    <text x="968" y="584" fill="#1e293b">DELIVERED, FAILED</text>
+  </g>
+
+  <!-- edges -->
+  <g stroke="#334155" stroke-width="1.8" fill="none">
+    <!-- Customer composition Address -->
+    <line x1="160" y1="210" x2="160" y2="300" marker-end="url(#open)"/>
+    <polygon points="160,210 153,220 160,230 167,220" fill="#334155" stroke="#334155"/>
+    <!-- Customer 1 --- * Order -->
+    <line x1="280" y1="115" x2="420" y2="115"/>
+    <!-- Order composition OrderItem -->
+    <line x1="550" y1="260" x2="550" y2="340" marker-end="url(#open)"/>
+    <polygon points="550,260 543,270 550,280 557,270" fill="#334155" stroke="#334155"/>
+    <!-- OrderItem * --- 1 Product -->
+    <line x1="550" y1="440" x2="550" y2="520" marker-end="url(#open)"/>
+    <!-- Order 1 --- 0..1 Payment -->
+    <line x1="680" y1="115" x2="760" y2="115"/>
+    <!-- Order 1 --- 0..1 Delivery -->
+    <line x1="680" y1="210" x2="760" y2="350"/>
+    <!-- Delivery --- 1 Address -->
+    <path d="M880,450 L880,478 L160,478 L160,420" marker-end="url(#open)"/>
+  </g>
+  <g stroke="#7c3aed" stroke-width="1.8" fill="none" stroke-dasharray="6 4">
+    <path d="M420,240 L340,240 L340,565 L280,565" marker-end="url(#dash)"/>
+    <path d="M1000,115 L1100,115 L1100,565 L940,565" marker-end="url(#dash)"/>
+    <path d="M1000,375 L1050,375 L1050,520" marker-end="url(#dash)"/>
+  </g>
+  <g font-size="11" fill="#1e293b">
+    <text x="288" y="108">1</text>
+    <text x="408" y="108">*</text>
+    <text x="556" y="455">*</text>
+    <text x="556" y="515">1</text>
+    <text x="700" y="108">0..1</text>
+    <text x="700" y="275">0..1</text>
+    <text x="170" y="436">1</text>
+    <text x="346" y="255" fill="#7c3aed">&#171;uses&#187;</text>
+    <text x="1006" y="132" fill="#7c3aed">&#171;uses&#187;</text>
+    <text x="1006" y="392" fill="#7c3aed">&#171;uses&#187;</text>
+  </g>
+</svg>

@@ -78,6 +78,31 @@ compiling and running the tests. `build.sh` and `test.sh` now include
 
 ---
 
+## 8. Records do not compile on JDK 11 (2026-10-07)
+
+**Symptom:** the Week-2 brief requires records, but the default toolchain here
+is OpenJDK 11 - `javac` rejects the `record` keyword outright.
+
+**Fix:** switched compiling and testing to Temurin OpenJDK 17 (downloaded as a
+tarball since there was no package-manager access); README now states
+JDK 17+. Week-1 code compiles unchanged on 17.
+
+**Lesson:** check the language level a brief implies (records = Java 16+)
+before choosing the toolchain.
+
+## 9. One exception type was not enough (2026-10-07)
+
+**Symptom:** the first domain draft threw `IllegalArgumentException` for
+everything, so tests could not distinguish "you gave me bad data" from "you
+asked at the wrong moment".
+
+**Fix:** constructors and record compact constructors throw
+`IllegalArgumentException` (bad data - the object never exists invalid);
+guarded behaviour methods throw `IllegalStateException` via the single
+`requireStatus(...)` helper (bad timing). Tests assert each kind separately.
+
+---
+
 Overall takeaway: writing the boundary tests early caught two real logic bugs
 (items 2 and 3). That is the point of keeping the business logic out of the
 console class - `OrderCalculator` can be tested without ever touching a
