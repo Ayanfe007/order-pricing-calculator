@@ -1,5 +1,8 @@
 package store.domain;
 
+import store.exception.StateTransitionException;
+import store.exception.ValidationException;
+
 /**
  * A class with a guarded state machine:
  * PREPARING -> IN_TRANSIT -> DELIVERED (or FAILED while in transit).
@@ -12,7 +15,7 @@ public final class Delivery {
 
     public Delivery(Address destination) {
         if (destination == null) {
-            throw new IllegalArgumentException("Delivery needs a destination address.");
+            throw new ValidationException("Delivery needs a destination address.");
         }
         this.destination = destination;
     }
@@ -32,7 +35,7 @@ public final class Delivery {
 
     public void startTransit() {
         if (status != DeliveryStatus.PREPARING) {
-            throw new IllegalStateException(
+            throw new StateTransitionException(
                     "Delivery can leave PREPARING only once; it is " + status + ".");
         }
         status = DeliveryStatus.IN_TRANSIT;
@@ -40,7 +43,7 @@ public final class Delivery {
 
     public void markDelivered() {
         if (status != DeliveryStatus.IN_TRANSIT) {
-            throw new IllegalStateException(
+            throw new StateTransitionException(
                     "Only an IN_TRANSIT delivery can be delivered; it is " + status + ".");
         }
         status = DeliveryStatus.DELIVERED;
@@ -48,7 +51,7 @@ public final class Delivery {
 
     public void markFailed() {
         if (status != DeliveryStatus.IN_TRANSIT) {
-            throw new IllegalStateException(
+            throw new StateTransitionException(
                     "Only an IN_TRANSIT delivery can fail; it is " + status + ".");
         }
         status = DeliveryStatus.FAILED;

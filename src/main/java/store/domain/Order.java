@@ -3,6 +3,10 @@ package store.domain;
 import java.util.ArrayList;
 import java.util.List;
 
+import store.exception.StateTransitionException;
+import store.exception.ValidationException;
+import store.validation.OrderValidator;
+
 /**
  * The aggregate root of the domain model. A class because its state changes
  * through a guarded lifecycle:
@@ -23,12 +27,7 @@ public final class Order {
     private Delivery delivery;
 
     public Order(String orderId, Customer customer) {
-        if (orderId == null || orderId.isBlank()) {
-            throw new IllegalArgumentException("Order id must not be blank.");
-        }
-        if (customer == null) {
-            throw new IllegalArgumentException("Order needs a customer.");
-        }
+        OrderValidator.validateDomainOrder(orderId, customer != null);
         this.orderId = orderId.trim();
         this.customer = customer;
     }
@@ -69,7 +68,7 @@ public final class Order {
     public void addItem(OrderItem item) {
         requireStatus(OrderStatus.PENDING, "add items");
         if (item == null) {
-            throw new IllegalArgumentException("Cannot add a null item.");
+            throw new ValidationException("Cannot add a null item.");
         }
         item.product().decreaseStock(item.quantity());
         items.add(item);
@@ -78,7 +77,7 @@ public final class Order {
     public void attachPayment(Payment newPayment) {
         requireStatus(OrderStatus.PENDING, "attach a payment");
         if (newPayment == null) {
-            throw new IllegalArgumentException("Cannot attach a null payment.");
+            throw new ValidationException("Cannot attach a null payment.");
         }
         this.payment = newPayment;
     }
@@ -86,7 +85,7 @@ public final class Order {
     public void attachDelivery(Delivery newDelivery) {
         requireStatus(OrderStatus.PENDING, "attach a delivery");
         if (newDelivery == null) {
-            throw new IllegalArgumentException("Cannot attach a null delivery.");
+            throw new ValidationException("Cannot attach a null delivery.");
         }
         this.delivery = newDelivery;
     }
@@ -94,7 +93,7 @@ public final class Order {
     public void confirm() {
         requireStatus(OrderStatus.PENDING, "confirm");
         if (items.isEmpty()) {
-            throw new IllegalStateException(
+            throw new StateTransitionException(
                     "Cannot confirm order " + orderId + " with no items.");
         }
         status = OrderStatus.CONFIRMED;
@@ -104,11 +103,11 @@ public final class Order {
     public void ship() {
         requireStatus(OrderStatus.CONFIRMED, "ship");
         if (payment == null || !payment.isPaid()) {
-            throw new IllegalStateException(
+            throw new StateTransitionException(
                     "Order " + orderId + " cannot ship until its payment is PAID.");
         }
         if (delivery == null) {
-            throw new IllegalStateException(
+            throw new StateTransitionException(
                     "Order " + orderId + " cannot ship without a delivery.");
         }
         status = OrderStatus.SHIPPED;
@@ -125,7 +124,7 @@ public final class Order {
     /** Cancelling returns reserved stock and refunds a paid payment. */
     public void cancel() {
         if (status == OrderStatus.DELIVERED || status == OrderStatus.CANCELLED) {
-            throw new IllegalStateException(
+            throw new StateTransitionException(
                     "A " + status + " order cannot be cancelled.");
         }
         for (OrderItem item : items) {
@@ -158,7 +157,7 @@ public final class Order {
 
     private void requireStatus(OrderStatus needed, String action) {
         if (status != needed) {
-            throw new IllegalStateException("Cannot " + action + " when order "
+            throw new StateTransitionException("Cannot " + action + " when order "
                     + orderId + " is " + status + " (needs " + needed + ").");
         }
     }

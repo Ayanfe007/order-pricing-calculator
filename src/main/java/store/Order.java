@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import store.validation.OrderValidator;
+
 /** A validated order: at least one item, plus promo code, customer type and zone. */
 public final class Order {
 
@@ -14,12 +16,7 @@ public final class Order {
 
     public Order(List<OrderItem> items, String promoCode,
                  CustomerType customerType, DeliveryZone zone) {
-        if (items == null || items.isEmpty()) {
-            throw new IllegalArgumentException("An order must contain at least one item.");
-        }
-        if (zone == null) {
-            throw new IllegalArgumentException("A delivery zone is required (A, B or C).");
-        }
+        OrderValidator.validatePricingOrder(items, zone == null ? null : zone.name());
         this.items = Collections.unmodifiableList(new ArrayList<>(items));
         this.promoCode = promoCode == null ? "" : promoCode.trim().toUpperCase();
         this.customerType = customerType == null ? CustomerType.STANDARD : customerType;
