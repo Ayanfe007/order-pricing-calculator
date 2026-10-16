@@ -1,85 +1,57 @@
-# Design-Decision Notes (Week 2 - domain model)
+# Design-Decision Notes — Weeks 2 and 3
 
-Why each type is a class, a record, or an enum, and why the relationships look
-the way they do. See `docs/uml-class-diagram.svg` for the picture.
+These notes explain the Week-02 domain model and the Week-03 package/service refactor. The Week-02 class diagram is preserved at `docs/uml-class-diagram.svg`; the Week-03 package comparison is `docs/package-diagram-before-after.svg`.
 
-## 1. Classes vs records vs enums - the selection rule
+## 1. Classes, records, and enums
 
-I used one question to choose: **does this thing have identity plus a state
-that changes over time, with behaviour that guards the changes?**
+The selection rule is: **does this thing have identity and changing state, or is it an immutable value / fixed vocabulary?**
 
-| Choice  | Rule                                        | Types |
-|---------|---------------------------------------------|-------|
-| class   | identity + mutable state + guarded behaviour | `Customer` (loyalty points), `Product` (stock), `Order` (lifecycle), `Payment` (payment state), `Delivery` (delivery state) |
-| record  | pure immutable value / snapshot              | `Address`, `OrderItem` |
-| enum    | fixed, known vocabulary of states            | `OrderStatus`, `PaymentStatus`, `DeliveryStatus` |
+| Kind | Types | Reason |
+|---|---|---|
+| Class | `Customer`, `Product`, `Order`, `Payment`, `Delivery` | Mutable identity with guarded behavior: loyalty points, stock, order/payment/delivery lifecycle |
+| Record | `Address`, domain `OrderItem` | Immutable value/snapshot; domain `OrderItem` is a product + quantity pair with derived `lineTotal()` |
+| Enum | `CustomerType`, `DeliveryZone`, `OrderStatus`, `PaymentStatus`, `DeliveryStatus` | Small fixed sets of customer categories, locations, and states |
 
-- **Customer is a class**, not a record: loyalty points grow when orders are
-  delivered, so `earnLoyaltyPoints()` is real behaviour on mutable state.
-- **Product is a class**: stock moves through `decreaseStock()/increaseStock()`,
-  and `decreaseStock` refuses overselling - a record could not guard that.
-- **Order is a class** and the *aggregate root*: every lifecycle move
-  (`confirm/ship/deliver/cancel`) is a method that first validates the current
-  state and throws `IllegalStateException` with the rule in the message.
-- **Address is a record**: once written on an order it must never silently
-  change; equality-by-value is exactly right. Validation still happens, in the
-  compact constructor.
-- **OrderItem is a record**: an immutable (product, quantity) pair; the only
-  behaviour is the derived value `lineTotal()`.
-- **Enums for statuses**: the states are a fixed business vocabulary. Making
-  them enums makes illegal *values* unrepresentable; the owning classes then
-  make illegal *transitions* impossible.
+`model.Order` is the aggregate root: it owns item reservation, confirmation, shipment, delivery, cancellation, refunds, and loyalty effects. Status enums name states; transition logic remains beside the objects whose payment/delivery conditions it needs.
 
-## 2. Where transitions live - deliberately NOT in the enums
+## 2. Keep the aggregate independent from pricing
 
-I considered putting `nextStatus()` logic inside the enums. I rejected it:
-whether an order may ship depends on the **payment** and the **delivery**,
-which the enum cannot see. Keeping transitions inside `Order` (and `Payment`,
-`Delivery` for their own small machines) keeps each rule next to the data it
-needs. The enums stay dumb, printable, and testable.
+There are intentionally two request shapes:
 
-## 3. Two kinds of validation, two exception types
+- `model.Order` is the mutable Week-02 e-commerce aggregate, with `Product`-backed lines and lifecycle state.
+- `model.PricingOrder` is the immutable Week-01 pricing request; `PricingLineItem` contains only display name, unit price, and quantity.
 
-- **Bad data** (blank name, invalid email, price <= 0, quantity out of range)
-  -> `IllegalArgumentException`, thrown in constructors / record compact
-  constructors. The object simply never exists in an invalid form.
-- **Bad timing / state change** (ship before paid, add item after confirm,
-  refund before paid) -> `IllegalStateException`, thrown by the guarded
-  behaviour methods, via the single private helper `requireStatus(...)`.
+`OrderPricingService.calculate(Order, promoCode)` maps the aggregate to the pricing request in the **service layer**. The model does not construct or call a pricing service. This avoids duplicating price rules and avoids coupling a domain entity to an application use case.
 
-That split means a caller can tell "you gave me garbage" from "you asked at
-the wrong moment", and the tests assert each kind separately.
+## 3. Package boundaries and dependency direction
 
-## 4. Relationships and their multiplicities
+- `app` owns console input, re-prompting, entry points, and receipt formatting.
+- `service` owns pricing, checkout orchestration, and strategy selection.
+- `repository` defines persistence boundaries and provides in-memory adapters.
+- `model` owns domain state and immutable values.
+- `validation` centralizes object-construction/input rules; `exception` names common failure categories.
+- `util` owns shared price rounding, formatting, and pricing-rule constants.
 
-- `Customer 1 --- * Order` : a customer places many orders; an order has exactly
-  one customer (constructor-enforced).
-- `Order 1 ◆--- * OrderItem` : composition - items have no meaning outside
-  their order; `items()` returns `List.copyOf(...)` so outsiders cannot mutate
-  the aggregate.
-- `OrderItem * --- 1 Product` : many lines may reference the same catalogue
-  product; that is why stock lives on `Product`, not on the line.
-- `Order 1 --- 0..1 Payment` and `Order 1 --- 0..1 Delivery` : attached while
-  PENDING; `ship()` proves why they are optional at construction but mandatory
-  at shipping time.
-- `Delivery * --- 1 Address`, `Customer 1 --- 1 Address` : the address record
-  is shared by value; the delivery fee comes from `Address.zone()` re-using the
-  Week-1 `DeliveryZone` fee table.
-- `Order` re-uses Week-1 `CustomerType` on `Customer`, and `priceBreakdown()`
-  delegates to Week-1 `OrderCalculator` instead of re-implementing a single
-  pricing rule - **one source of truth for money maths**.
+The flow is **app → service → model/repository/util**. The model does not depend on services. Validators use primitive/value inputs and throw typed exceptions, avoiding a model/validator import cycle.
 
-## 5. Side effects that travel with state changes
+## 4. Interfaces and composition
 
-`Order.addItem` reserves stock immediately; `Order.cancel` returns it and
-refunds a paid payment; `Order.deliver` moves the delivery to DELIVERED and
-awards loyalty points. Bundling these inside the transition methods makes the
-rules impossible to forget - a test (`addItemReservesStockAndCancelReturnsIt`,
-`deliveredOrderCannotBeCancelled`) pins each one down.
+`DiscountPolicy` separates tier, promo, and customer discounts. `CompositeDiscountPolicy` composes them and applies the shared 25% cap exactly once. `ShippingCalculator` has zone, free, and threshold/composed implementations. `PaymentProcessor` has card and bank-transfer implementations; `PaymentProcessingService` routes to a supporting processor. `ProductRepository` and `OrderRepository` can be replaced by durable adapters without changing application-service code.
 
-## 6. What I would add next (honest limitations)
+These are strategy boundaries, not a class hierarchy of business variants. Services receive collaborators through constructors and compose them. Payment processor implementations are local simulations; they do not contact real financial networks.
 
-- A money type (or BigDecimal) if this grew beyond an exercise.
-- Persistence/repository interfaces so aggregates can be re-hydrated.
-- An event list (`OrderShipped`, `PaymentRefunded`...) once more than one
-  module reacts to transitions.
+## 5. Validation and errors
+
+- `AddressValidator`, `CustomerValidator`, `ProductValidator`, `PaymentValidator`, `OrderValidator`, and `OrderItemValidator` hold named input/invariant rules.
+- `ValidationException` is an `IllegalArgumentException`; `StateTransitionException` is an `IllegalStateException`. `InsufficientStockException` and `UnsupportedPaymentMethodException` specialize those categories. Existing callers catching the broad Java exceptions remain compatible.
+- `NotFoundException` is used by application services when a repository lookup fails.
+
+## 6. Lifecycle side effects and atomicity
+
+`Order.addItem` reserves stock. `Order.cancel` returns it and refunds a paid payment. Delivery moves alongside order moves, and a successful delivery awards loyalty points. A review found that changing the aggregate status before the child delivery state could leave partial state if the child refused a transition. The order now completes the delivery transition first; new tests pin both failed-shipping and failed-delivery cases.
+
+## 7. Presentation, testability, and remaining trade-offs
+
+`OrderSummaryPrinter` is shared by both console front ends; `ConsoleInput` centralizes repeated parsing/re-prompt behavior. `OrderPricingService` has no console, repository, or network I/O. Tests cover strategies, repositories, lifecycle invariants, and previous pricing boundary cases.
+
+The project still uses `double` plus two-decimal rounding for a teaching exercise; a production payment system should use a currency-safe decimal type and real provider adapters with idempotency, retries, and reconciliation. In-memory repositories intentionally do not persist across process restarts.

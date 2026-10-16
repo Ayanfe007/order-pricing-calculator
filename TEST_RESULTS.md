@@ -1,73 +1,28 @@
-# Test Results Report
+# Week-03 Test Results
 
-- **Date:** 2026-10-06
-- **Suite:** `store.OrderCalculatorTest` (JUnit Jupiter 5.10.2)
-- **Runner:** `junit-platform-console-standalone-1.10.2.jar` (bundled in `lib/`)
-- **JDK:** OpenJDK 11
-- **Command:** `./test.sh`
-- **Result:** **15 tests found, 15 successful, 0 failed** (exit code 0)
+**Environment:** OpenJDK 17.0.20.1 · JUnit Jupiter 5.10.2 · clean build via `./build.sh`
 
-## Captured output
+## Current run
 
-```
-.
-+-- JUnit Jupiter [OK]
-| '-- OrderCalculatorTest [OK]
-|   +-- deliveryFeeFollowsZone() [OK]
-|   +-- totalIsDiscountedPlusDeliveryPlusTax() [OK]
-|   +-- promoCodeGivesTenPercent() [OK]
-|   +-- freeDeliveryStartsExactlyAtThreshold() [OK]
-|   +-- tieredDiscountUsesInclusiveThresholds() [OK]
-|   +-- combinedDiscountsAreCappedAt25Percent() [OK]
-|   +-- taxIsSevenPointFivePercentOfDiscountedAmount() [OK]
-|   +-- badZoneAndCustomerTypeInputsAreRejected() [OK]
-|   +-- emptyOrderIsRejected() [OK]
-|   +-- negativePriceIsRejected() [OK]
-|   +-- premiumCustomerGetsFivePercent() [OK]
-|   +-- zeroAndHugeQuantitiesAreRejected() [OK]
-|   +-- subtotalAddsUpLineTotals() [OK]
-|   +-- freeShipPromoWaivesDelivery() [OK]
-|   '-- unknownPromoIsIgnoredWithNote() [OK]
-+-- JUnit Vintage [OK]
-'-- JUnit Platform Suite [OK]
-
-Test run finished after 159 ms
-[         4 containers found      ]
-[         0 containers skipped    ]
-[         4 containers started    ]
-[         0 containers aborted    ]
-[         4 containers successful ]
-[         0 containers failed     ]
-[        15 tests found           ]
-[         0 tests skipped         ]
-[        15 tests started         ]
-[         0 tests aborted         ]
-[        15 tests successful      ]
-[         0 tests failed          ]
+```text
+./build.sh  -> Build OK.
+./test.sh   -> 41 tests found, 41 successful, 0 failed
 ```
 
-## Coverage of the required case types
+| Suite | Cases | Coverage |
+|---|---:|---|
+| `store.service.OrderPricingServiceTest` | 15 | Preserved Week-01 subtotal, promo, member/tier discounts, VAT, totals, delivery, caps, validation, and input parsing rules |
+| `store.model.DomainModelTest` | 16 | Preserved Week-02 domain checks plus two tests that prevent partial order/delivery state transitions |
+| `store.service.OrderPricingPoliciesTest` | 5 | Tiered/promo policies, cap composition, zone/free/threshold shipping, legacy total |
+| `store.service.PaymentProcessingServiceTest` | 3 | Card and transfer implementations, unsupported-method rejection without state mutation |
+| `store.service.OrderApplicationServiceTest` | 2 | Repository-backed order lifecycle, stock state, and missing product handling |
+| **Total** | **41** | **41 passed · 0 failed** |
 
-| Case type   | Tests |
-|-------------|-------|
-| Normal      | `subtotalAddsUpLineTotals`, `promoCodeGivesTenPercent`, `premiumCustomerGetsFivePercent`, `taxIsSevenPointFivePercentOfDiscountedAmount`, `totalIsDiscountedPlusDeliveryPlusTax`, `deliveryFeeFollowsZone`, `freeShipPromoWaivesDelivery` |
-| Boundary    | `tieredDiscountUsesInclusiveThresholds` (49,999.99 / 50,000.00 / 99,999.99 / 100,000.00), `freeDeliveryStartsExactlyAtThreshold` (149,999.99 / 150,000.00), `combinedDiscountsAreCappedAt25Percent` (35% -> 25% cap) |
-| Invalid     | `negativePriceIsRejected`, `zeroAndHugeQuantitiesAreRejected`, `emptyOrderIsRejected`, `unknownPromoIsIgnoredWithNote`, `badZoneAndCustomerTypeInputsAreRejected` |
+## Regression evidence
 
-Re-run any time with `./test.sh`; the same tree and counters are printed to the console.
+- The original Week-01/02 set contained **29 tests** (15 pricing + 14 domain); every original scenario/assertion remains represented in the renamed/moved suites.
+- Twelve Week-03 checks were added: five pricing/shipping policy tests, three payment-strategy tests, two application/repository tests, and two atomic lifecycle failure tests.
+- `samples/sample1.txt` still prints **NGN 31,740.00**.
+- Catalog run with 2 Jollof Party Packs, 4 Zobo drinks, premium customer, WELCOME10, Zone B also prints **NGN 31,740.00**.
 
-## Week-2 addendum (2026-10-07)
-
-The suite now also runs `store.domain.DomainModelTest` (14 tests) on OpenJDK
-17: **29 tests found, 29 successful, 0 failed**.
-
-Domain coverage: record validation (`addressRecordRejectsBlankCity`),
-customer validation (`customerRejectsBadEmailAndPhone`,
-`loyaltyPointsRejectNegative`), stock guard (`productRejectsOversell`),
-order state machine (`addItemReservesStockAndCancelReturnsIt`,
-`confirmedOrderRejectsNewItems`, `confirmRequiresAtLeastOneItem`,
-`shipRequiresPaidPaymentAndDelivery`, `fullLifecycleReachesDeliveredAndEarnsLoyalty`,
-`deliveredOrderCannotBeCancelled`), payment machine
-(`refundOnlyPossibleWhenPaid`, `failedPaymentCanRetryThenPay`), delivery
-machine (`deliveryCannotBeDeliveredBeforeTransit`) and the Week-1 bridge
-(`priceBreakdownReusesWeek1Rules`).
+The build now removes `out/` and `out-test/` before compiling, preventing stale `.class` files from being included in test discovery.

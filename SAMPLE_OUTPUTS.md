@@ -4,7 +4,7 @@ Each sample input file lives in `samples/`. The outputs below were captured on
 2026-10-06 with:
 
 ```
-java -cp out store.ConsoleApp < samples/sampleN.txt
+java -cp out store.app.ConsoleApp < samples/sampleN.txt
 ```
 
 Because the input is piped, the terminal echoes prompts back-to-back on one
