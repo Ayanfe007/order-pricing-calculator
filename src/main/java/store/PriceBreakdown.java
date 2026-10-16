@@ -19,7 +19,7 @@ public final class PriceBreakdown {
     private final double total;
     private final List<String> notes;
 
-    PriceBreakdown(double subtotal, double discountRate, double discountAmount,
+    public PriceBreakdown(double subtotal, double discountRate, double discountAmount,
                    double discountedSubtotal, double deliveryFee, double taxAmount,
                    double total, List<String> notes) {
         this.subtotal = subtotal;
