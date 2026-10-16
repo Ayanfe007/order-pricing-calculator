@@ -6,11 +6,11 @@ import store.exception.ValidationException;
 public final class AddressValidator {
     private AddressValidator() { }
 
-    public static void validate(String street, String city, String state, String zone) {
+    public static void validate(String street, String city, String state, boolean hasZone) {
         requireText(street, "street");
         requireText(city, "city");
         requireText(state, "state");
-        if (zone == null) {
+        if (!hasZone) {
             throw new ValidationException("Address zone must not be null.");
         }
     }

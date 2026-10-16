@@ -2,7 +2,7 @@ package store.util;
 
 import java.util.Locale;
 
-import store.PricingConfig;
+import store.util.PricingConfig;
 
 /** Shared formatting for user-facing pricing notes and console summaries. */
 public final class PricingFormat {

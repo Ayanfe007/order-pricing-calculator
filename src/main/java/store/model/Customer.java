@@ -1,6 +1,5 @@
-package store.domain;
+package store.model;
 
-import store.CustomerType;
 import store.validation.CustomerValidator;
 import store.exception.ValidationException;
 

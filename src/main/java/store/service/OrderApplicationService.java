@@ -2,13 +2,13 @@ package store.service;
 
 import java.util.Objects;
 
-import store.domain.Address;
-import store.domain.Customer;
-import store.domain.Delivery;
-import store.domain.Order;
-import store.domain.OrderItem;
-import store.domain.Payment;
-import store.domain.Product;
+import store.model.Address;
+import store.model.Customer;
+import store.model.Delivery;
+import store.model.Order;
+import store.model.OrderItem;
+import store.model.Payment;
+import store.model.Product;
 import store.exception.NotFoundException;
 import store.exception.StateTransitionException;
 import store.repository.OrderRepository;

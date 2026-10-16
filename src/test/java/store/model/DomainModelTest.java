@@ -1,11 +1,8 @@
-package store.domain;
+package store.model;
 
 import org.junit.jupiter.api.Test;
 
-import store.CustomerType;
-import store.DeliveryZone;
-import store.OrderCalculator;
-import store.PriceBreakdown;
+import store.service.OrderPricingService;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -177,7 +174,7 @@ class DomainModelTest {
                 new Product("SKU-1", "Rice 5kg", 12000, 10), 2));   // 24,000
         order.addItem(new OrderItem(
                 new Product("SKU-2", "Oil 1L", 4500, 8), 1));        //  4,500
-        PriceBreakdown bd = order.priceBreakdown(new OrderCalculator(), "WELCOME10");
+        PriceBreakdown bd = new OrderPricingService().calculate(order, "WELCOME10");
         // subtotal 28,500; 10% promo + 5% premium = 15% -> 4,275
         assertEquals(28500.0, bd.subtotal(), D);
         assertEquals(4275.0, bd.discountAmount(), D);

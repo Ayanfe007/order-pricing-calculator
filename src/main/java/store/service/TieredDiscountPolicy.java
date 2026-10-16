@@ -2,8 +2,8 @@ package store.service;
 
 import java.util.List;
 
-import store.Order;
-import store.PricingConfig;
+import store.model.PricingOrder;
+import store.util.PricingConfig;
 import store.util.PricingFormat;
 
 /** Applies the two inclusive subtotal tiers from the pricing rules. */
@@ -19,7 +19,7 @@ public final class TieredDiscountPolicy implements DiscountPolicy {
     }
 
     @Override
-    public DiscountQuote evaluate(Order order, double subtotal) {
+    public DiscountQuote evaluate(PricingOrder order, double subtotal) {
         double rate = rateFor(subtotal);
         if (rate == 0.0) {
             return new DiscountQuote(0.0, List.of());

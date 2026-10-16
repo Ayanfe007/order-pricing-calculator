@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import store.Order;
+import store.model.PricingOrder;
 import store.util.PricingFormat;
 
 /** Composes independent discount rules and enforces the common maximum once. */
@@ -25,7 +25,7 @@ public final class CompositeDiscountPolicy implements DiscountPolicy {
     }
 
     @Override
-    public DiscountQuote evaluate(Order order, double subtotal) {
+    public DiscountQuote evaluate(PricingOrder order, double subtotal) {
         double combinedRate = 0.0;
         List<String> notes = new ArrayList<>();
         for (DiscountPolicy policy : policies) {

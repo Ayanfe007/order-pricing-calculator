@@ -17,11 +17,11 @@ public final class OrderValidator {
         }
     }
 
-    public static void validatePricingOrder(List<?> items, String zone) {
+    public static void validatePricingOrder(List<?> items, boolean hasZone) {
         if (items == null || items.isEmpty()) {
             throw new ValidationException("An order must contain at least one item.");
         }
-        if (zone == null) {
+        if (!hasZone) {
             throw new ValidationException("A delivery zone is required (A, B or C).");
         }
     }

@@ -4,17 +4,17 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import store.CustomerType;
-import store.DeliveryZone;
-import store.Order;
-import store.OrderItem;
+import store.model.CustomerType;
+import store.model.DeliveryZone;
+import store.model.PricingLineItem;
+import store.model.PricingOrder;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class OrderPricingPoliciesTest {
-    private static Order order(double price, String promo, CustomerType customer, DeliveryZone zone) {
-        return new Order(List.of(new OrderItem("Rice", price, 1)), promo, customer, zone);
+    private static PricingOrder order(double price, String promo, CustomerType customer, DeliveryZone zone) {
+        return new PricingOrder(List.of(new PricingLineItem("Rice", price, 1)), promo, customer, zone);
     }
 
     @Test
@@ -65,7 +65,7 @@ class OrderPricingPoliciesTest {
 
     @Test
     void defaultServicePreservesTheWeekOneTotal() {
-        Order order = order(32_000, "WELCOME10", CustomerType.PREMIUM, DeliveryZone.ZONE_B);
-        assertEquals(31_740.0, new OrderPricingService().calculate(order).total(), 0.001);
+        PricingOrder pricingOrder = order(32_000, "WELCOME10", CustomerType.PREMIUM, DeliveryZone.ZONE_B);
+        assertEquals(31_740.0, new OrderPricingService().calculate(pricingOrder).total(), 0.001);
     }
 }

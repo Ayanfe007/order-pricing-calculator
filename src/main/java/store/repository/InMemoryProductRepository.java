@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import store.domain.Product;
+import store.model.Product;
 import store.exception.ValidationException;
 
 /** Deterministic product repository for the console app and tests. */

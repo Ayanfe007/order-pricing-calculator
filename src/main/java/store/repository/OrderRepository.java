@@ -2,7 +2,7 @@ package store.repository;
 
 import java.util.Optional;
 
-import store.domain.Order;
+import store.model.Order;
 
 /** Persistence boundary for order aggregates. */
 public interface OrderRepository {

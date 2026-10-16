@@ -1,6 +1,12 @@
-package store;
+package store.service;
 
 import org.junit.jupiter.api.Test;
+
+import store.model.CustomerType;
+import store.model.DeliveryZone;
+import store.model.PriceBreakdown;
+import store.model.PricingLineItem;
+import store.model.PricingOrder;
 
 import java.util.Arrays;
 import java.util.List;
@@ -14,14 +20,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * JUnit 5 tests for the pricing rules: normal cases, invalid input and
  * boundary values (exactly-at-threshold amounts).
  */
-class OrderCalculatorTest {
+class OrderPricingServiceTest {
 
     private static final double D = 0.001; // delta for money comparisons
-    private final OrderCalculator calc = new OrderCalculator();
+    private final OrderPricingService calc = new OrderPricingService();
 
-    private static Order singleItemOrder(double amount, String promo,
+    private static PricingOrder singleItemOrder(double amount, String promo,
                                          CustomerType type, DeliveryZone zone) {
-        return new Order(List.of(new OrderItem("Test item", amount, 1)),
+        return new PricingOrder(List.of(new PricingLineItem("Test item", amount, 1)),
                 promo, type, zone);
     }
 
@@ -29,16 +35,16 @@ class OrderCalculatorTest {
 
     @Test
     void subtotalAddsUpLineTotals() {
-        Order order = new Order(Arrays.asList(
-                new OrderItem("Rice", 2500, 2),
-                new OrderItem("Beans", 10000, 1)),
+        PricingOrder order = new PricingOrder(Arrays.asList(
+                new PricingLineItem("Rice", 2500, 2),
+                new PricingLineItem("Beans", 10000, 1)),
                 "", CustomerType.STANDARD, DeliveryZone.ZONE_A);
         assertEquals(15000.0, calc.subtotal(order), D);
     }
 
     @Test
     void promoCodeGivesTenPercent() {
-        Order order = singleItemOrder(10000, "WELCOME10",
+        PricingOrder order = singleItemOrder(10000, "WELCOME10",
                 CustomerType.STANDARD, DeliveryZone.ZONE_A);
         PriceBreakdown bd = calc.calculate(order);
         assertEquals(1000.0, bd.discountAmount(), D);
@@ -47,7 +53,7 @@ class OrderCalculatorTest {
 
     @Test
     void premiumCustomerGetsFivePercent() {
-        Order order = singleItemOrder(10000, "", CustomerType.PREMIUM, DeliveryZone.ZONE_A);
+        PricingOrder order = singleItemOrder(10000, "", CustomerType.PREMIUM, DeliveryZone.ZONE_A);
         assertEquals(500.0, calc.calculate(order).discountAmount(), D);
     }
 
@@ -58,7 +64,7 @@ class OrderCalculatorTest {
 
     @Test
     void totalIsDiscountedPlusDeliveryPlusTax() {
-        Order order = singleItemOrder(32000, "WELCOME10",
+        PricingOrder order = singleItemOrder(32000, "WELCOME10",
                 CustomerType.PREMIUM, DeliveryZone.ZONE_B);
         PriceBreakdown bd = calc.calculate(order);
         // 15% of 32,000 = 4,800 -> discounted 27,200; fee 2,500; VAT 2,040
@@ -67,14 +73,14 @@ class OrderCalculatorTest {
 
     @Test
     void deliveryFeeFollowsZone() {
-        Order order = singleItemOrder(1000, "", CustomerType.STANDARD, DeliveryZone.ZONE_C);
+        PricingOrder order = singleItemOrder(1000, "", CustomerType.STANDARD, DeliveryZone.ZONE_C);
         PriceBreakdown bd = calc.calculate(order);
         assertEquals(5000.0, bd.deliveryFee(), D);
     }
 
     @Test
     void freeShipPromoWaivesDelivery() {
-        Order order = singleItemOrder(1000, "FREESHIP",
+        PricingOrder order = singleItemOrder(1000, "FREESHIP",
                 CustomerType.STANDARD, DeliveryZone.ZONE_C);
         PriceBreakdown bd = calc.calculate(order);
         assertEquals(0.0, bd.deliveryFee(), D);
@@ -93,7 +99,7 @@ class OrderCalculatorTest {
 
     @Test
     void freeDeliveryStartsExactlyAtThreshold() {
-        Order order = singleItemOrder(1000, "", CustomerType.STANDARD, DeliveryZone.ZONE_B);
+        PricingOrder order = singleItemOrder(1000, "", CustomerType.STANDARD, DeliveryZone.ZONE_B);
         assertTrue(calc.deliveryWaived(order, 150000.00));
         assertFalse(calc.deliveryWaived(order, 149999.99));
     }
@@ -101,7 +107,7 @@ class OrderCalculatorTest {
     @Test
     void combinedDiscountsAreCappedAt25Percent() {
         // 10% (tier) + 20% (VIP20) + 5% (premium) = 35% -> capped at 25%
-        Order order = singleItemOrder(100000, "VIP20",
+        PricingOrder order = singleItemOrder(100000, "VIP20",
                 CustomerType.PREMIUM, DeliveryZone.ZONE_A);
         PriceBreakdown bd = calc.calculate(order);
         assertEquals(0.25, bd.discountRate(), D);
@@ -113,25 +119,25 @@ class OrderCalculatorTest {
     @Test
     void negativePriceIsRejected() {
         IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
-                () -> new OrderItem("Rice", -5, 1));
+                () -> new PricingLineItem("Rice", -5, 1));
         assertTrue(e.getMessage().contains("positive"));
     }
 
     @Test
     void zeroAndHugeQuantitiesAreRejected() {
-        assertThrows(IllegalArgumentException.class, () -> new OrderItem("Rice", 100, 0));
-        assertThrows(IllegalArgumentException.class, () -> new OrderItem("Rice", 100, 101));
+        assertThrows(IllegalArgumentException.class, () -> new PricingLineItem("Rice", 100, 0));
+        assertThrows(IllegalArgumentException.class, () -> new PricingLineItem("Rice", 100, 101));
     }
 
     @Test
     void emptyOrderIsRejected() {
         assertThrows(IllegalArgumentException.class,
-                () -> new Order(List.of(), "", CustomerType.STANDARD, DeliveryZone.ZONE_A));
+                () -> new PricingOrder(List.of(), "", CustomerType.STANDARD, DeliveryZone.ZONE_A));
     }
 
     @Test
     void unknownPromoIsIgnoredWithNote() {
-        Order order = singleItemOrder(10000, "BOGUS99",
+        PricingOrder order = singleItemOrder(10000, "BOGUS99",
                 CustomerType.STANDARD, DeliveryZone.ZONE_A);
         PriceBreakdown bd = calc.calculate(order);
         assertEquals(0.0, bd.discountAmount(), D);

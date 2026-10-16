@@ -2,7 +2,7 @@ package store.service;
 
 import java.util.Locale;
 
-import store.domain.Payment;
+import store.model.Payment;
 import store.exception.UnsupportedPaymentMethodException;
 import store.exception.ValidationException;
 

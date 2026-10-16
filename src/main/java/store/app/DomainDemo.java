@@ -1,22 +1,26 @@
-package store.domain;
-
-import store.DeliveryZone;
-import store.CustomerType;
-import store.OrderCalculator;
-import store.PriceBreakdown;
+package store.app;
 
 import java.util.Locale;
 
-/**
- * Small console demo of the Week-2 domain model: builds a customer, products,
- * an order, a payment and a delivery, shows a guarded refusal, then walks the
- * happy-path lifecycle and prices the order with the Week-1 engine.
- */
+import store.model.Address;
+import store.model.Customer;
+import store.model.CustomerType;
+import store.model.Delivery;
+import store.model.DeliveryZone;
+import store.model.Order;
+import store.model.OrderItem;
+import store.model.Payment;
+import store.model.PriceBreakdown;
+import store.model.Product;
+import store.service.OrderPricingService;
+import store.service.PaymentProcessingService;
+
+/** Runnable example of the Week-2 order lifecycle using the Week-3 services. */
 public final class DomainDemo {
+    private DomainDemo() { }
 
     public static void main(String[] args) {
-        OrderCalculator calculator = new OrderCalculator();
-
+        OrderPricingService pricing = new OrderPricingService();
         Address home = new Address("12 Bode Thomas St", "Surulere", "Lagos", DeliveryZone.ZONE_B);
         Customer ada = new Customer("Ada Obi", "ada@example.com", "08031234567",
                 home, CustomerType.PREMIUM);
@@ -31,25 +35,23 @@ public final class DomainDemo {
 
         System.out.println("Stock after reserving items: rice=" + rice.stock()
                 + ", oil=" + oil.stock());
-
-        PriceBreakdown bd = order.priceBreakdown(calculator, "WELCOME10");
-        System.out.println("Week-1 engine prices it: subtotal=" + money(bd.subtotal())
-                + ", discount=" + money(bd.discountAmount())
-                + ", delivery=" + money(bd.deliveryFee())
-                + ", VAT=" + money(bd.taxAmount())
-                + ", TOTAL=" + money(bd.total()));
+        PriceBreakdown breakdown = pricing.calculate(order, "WELCOME10");
+        System.out.println("Week-1 rules price it: subtotal=" + money(breakdown.subtotal())
+                + ", discount=" + money(breakdown.discountAmount())
+                + ", delivery=" + money(breakdown.deliveryFee())
+                + ", VAT=" + money(breakdown.taxAmount())
+                + ", TOTAL=" + money(breakdown.total()));
 
         try {
-            order.ship(); // must be refused: not confirmed, payment not paid
+            order.ship();
         } catch (IllegalStateException e) {
             System.out.println("Guarded refusal: " + e.getMessage());
         }
 
         order.confirm();
-        order.payment().markPaid();
+        new PaymentProcessingService().process(order.payment());
         order.ship();
         order.deliver();
-
         System.out.println("Final order status:    " + order.status());
         System.out.println("Final delivery status: " + order.delivery().status());
         System.out.println("Final payment status:  " + order.payment().status());

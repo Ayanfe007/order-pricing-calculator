@@ -4,13 +4,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import store.CustomerType;
-import store.DeliveryZone;
-import store.Order;
-import store.OrderItem;
-import store.PriceBreakdown;
-import store.PricingConfig;
+import store.model.CustomerType;
+import store.model.DeliveryZone;
+import store.model.Order;
+import store.model.OrderItem;
+import store.model.PriceBreakdown;
+import store.model.PricingLineItem;
+import store.model.PricingOrder;
 import store.util.Money;
+import store.util.PricingConfig;
 import store.util.PricingFormat;
 
 /**
@@ -40,33 +42,33 @@ public final class OrderPricingService {
     }
 
     /** Sum of line totals, rounded to two decimal places. */
-    public double subtotal(Order order) {
+    public double subtotal(PricingOrder order) {
         double sum = 0.0;
-        for (OrderItem item : order.items()) {
+        for (PricingLineItem item : order.items()) {
             sum += item.lineTotal();
         }
         return Money.round2(sum);
     }
 
-    /** Kept as a small query for the original inclusive tier rule. */
+    /** Query retained for the original inclusive tier rule. */
     public double tieredRate(double subtotal) {
         return new TieredDiscountPolicy().rateFor(subtotal);
     }
 
-    /** Kept as a query for callers that need the promo's percentage component. */
+    /** Query for the promo's percentage component. */
     public double promoRate(String promoCode) {
         return new PromoCodeDiscountPolicy().rateFor(promoCode);
     }
 
-    public double discountRate(Order order, double subtotal) {
+    public double discountRate(PricingOrder order, double subtotal) {
         return discountPolicy.evaluate(order, subtotal).rate();
     }
 
-    public boolean deliveryWaived(Order order, double discountedSubtotal) {
+    public boolean deliveryWaived(PricingOrder order, double discountedSubtotal) {
         return shippingCalculator.calculate(order, discountedSubtotal).fee() == 0.0;
     }
 
-    public double deliveryFee(Order order, double discountedSubtotal) {
+    public double deliveryFee(PricingOrder order, double discountedSubtotal) {
         return shippingCalculator.calculate(order, discountedSubtotal).fee();
     }
 
@@ -75,8 +77,8 @@ public final class OrderPricingService {
         return Money.round2(discountedSubtotal * PricingConfig.TAX_RATE);
     }
 
-    /** Prices a validated Week-1 pricing order without console or repository access. */
-    public PriceBreakdown calculate(Order order) {
+    /** Prices a validated pricing request without console or repository access. */
+    public PriceBreakdown calculate(PricingOrder order) {
         Objects.requireNonNull(order, "order");
         double subtotal = subtotal(order);
         DiscountQuote discount = discountPolicy.evaluate(order, subtotal);
@@ -95,25 +97,22 @@ public final class OrderPricingService {
                 discountedSubtotal, shipping.fee(), taxAmount, total, notes);
     }
 
-    /**
-     * Prices the live Week-2 aggregate by adapting its product-backed lines to
-     * the Week-1 pricing request. Mapping lives in the service layer, not model.
-     */
-    public PriceBreakdown calculate(store.domain.Order order, String promoCode) {
+    /** Adapts a live Week-2 aggregate into the pricing request in the service layer. */
+    public PriceBreakdown calculate(Order order, String promoCode) {
         Objects.requireNonNull(order, "order");
-        List<OrderItem> lines = new ArrayList<>();
-        for (store.domain.OrderItem item : order.items()) {
-            lines.add(new OrderItem(item.product().name(),
+        List<PricingLineItem> lines = new ArrayList<>();
+        for (OrderItem item : order.items()) {
+            lines.add(new PricingLineItem(item.product().name(),
                     item.product().unitPrice(), item.quantity()));
         }
         DeliveryZone zone = order.delivery() != null
                 ? order.delivery().destination().zone()
                 : order.customer().address().zone();
         CustomerType customerType = order.customer().type();
-        return calculate(new Order(lines, promoCode, customerType, zone));
+        return calculate(new PricingOrder(lines, promoCode, customerType, zone));
     }
 
-    /** Compatibility helper retained for the original test suite. */
+    /** Compatibility helper for the original money-rounding rule. */
     public static double round2(double amount) {
         return Money.round2(amount);
     }

@@ -1,4 +1,4 @@
-package store.domain;
+package store.model;
 
 /** Fixed vocabulary of delivery states; guarded inside {@link Delivery}. */
 public enum DeliveryStatus {

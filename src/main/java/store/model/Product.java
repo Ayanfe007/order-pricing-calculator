@@ -1,4 +1,4 @@
-package store.domain;
+package store.model;
 
 import store.exception.InsufficientStockException;
 import store.exception.StateTransitionException;

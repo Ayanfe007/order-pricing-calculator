@@ -1,4 +1,8 @@
-package store;
+package store.model;
+
+import java.util.Locale;
+
+import store.util.PricingConfig;
 
 /** Customer categories; PREMIUM and STUDENT carry a percentage discount. */
 public enum CustomerType {
@@ -29,7 +33,7 @@ public enum CustomerType {
             throw new IllegalArgumentException(
                     "Customer type must not be empty. Valid types: standard, premium, student.");
         }
-        String norm = input.trim().toUpperCase();
+        String norm = input.trim().toUpperCase(Locale.ROOT);
         for (CustomerType type : values()) {
             if (type.name().equals(norm)) {
                 return type;

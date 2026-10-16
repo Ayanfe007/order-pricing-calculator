@@ -1,6 +1,5 @@
-package store.domain;
+package store.model;
 
-import store.DeliveryZone;
 import store.validation.AddressValidator;
 
 /**
@@ -10,7 +9,7 @@ import store.validation.AddressValidator;
 public record Address(String street, String city, String state, DeliveryZone zone) {
 
     public Address {
-        AddressValidator.validate(street, city, state, zone == null ? null : zone.name());
+        AddressValidator.validate(street, city, state, zone != null);
     }
 
 }

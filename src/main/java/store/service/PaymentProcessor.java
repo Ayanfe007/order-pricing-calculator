@@ -1,6 +1,6 @@
 package store.service;
 
-import store.domain.Payment;
+import store.model.Payment;
 
 /** Strategy for settling one supported payment method. */
 public interface PaymentProcessor {

@@ -4,15 +4,15 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import store.CustomerType;
-import store.DeliveryZone;
-import store.domain.Address;
-import store.domain.Customer;
-import store.domain.DeliveryStatus;
-import store.domain.Order;
-import store.domain.OrderStatus;
-import store.domain.PaymentStatus;
-import store.domain.Product;
+import store.model.CustomerType;
+import store.model.DeliveryZone;
+import store.model.Address;
+import store.model.Customer;
+import store.model.DeliveryStatus;
+import store.model.Order;
+import store.model.OrderStatus;
+import store.model.PaymentStatus;
+import store.model.Product;
 import store.exception.NotFoundException;
 import store.repository.InMemoryOrderRepository;
 import store.repository.InMemoryProductRepository;

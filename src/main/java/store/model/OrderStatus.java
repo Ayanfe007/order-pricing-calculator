@@ -1,4 +1,4 @@
-package store.domain;
+package store.model;
 
 /**
  * Fixed vocabulary of order states. Transitions between these states are

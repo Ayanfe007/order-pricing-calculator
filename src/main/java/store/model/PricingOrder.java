@@ -1,29 +1,30 @@
-package store;
+package store.model;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 import store.validation.OrderValidator;
 
 /** A validated order: at least one item, plus promo code, customer type and zone. */
-public final class Order {
+public final class PricingOrder {
 
-    private final List<OrderItem> items;
+    private final List<PricingLineItem> items;
     private final String promoCode;
     private final CustomerType customerType;
     private final DeliveryZone zone;
 
-    public Order(List<OrderItem> items, String promoCode,
+    public PricingOrder(List<PricingLineItem> items, String promoCode,
                  CustomerType customerType, DeliveryZone zone) {
-        OrderValidator.validatePricingOrder(items, zone == null ? null : zone.name());
+        OrderValidator.validatePricingOrder(items, zone != null);
         this.items = Collections.unmodifiableList(new ArrayList<>(items));
-        this.promoCode = promoCode == null ? "" : promoCode.trim().toUpperCase();
+        this.promoCode = promoCode == null ? "" : promoCode.trim().toUpperCase(Locale.ROOT);
         this.customerType = customerType == null ? CustomerType.STANDARD : customerType;
         this.zone = zone;
     }
 
-    public List<OrderItem> items() {
+    public List<PricingLineItem> items() {
         return items;
     }
 

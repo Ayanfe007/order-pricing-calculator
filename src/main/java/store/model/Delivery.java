@@ -1,4 +1,4 @@
-package store.domain;
+package store.model;
 
 import store.exception.StateTransitionException;
 import store.exception.ValidationException;

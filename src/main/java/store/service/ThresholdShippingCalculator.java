@@ -2,8 +2,8 @@ package store.service;
 
 import java.util.Objects;
 
-import store.Order;
-import store.PricingConfig;
+import store.model.PricingOrder;
+import store.util.PricingConfig;
 
 /**
  * Decorates zone pricing with the existing free-shipping promo and subtotal
@@ -20,7 +20,7 @@ public final class ThresholdShippingCalculator implements ShippingCalculator {
     }
 
     @Override
-    public ShippingQuote calculate(Order order, double discountedSubtotal) {
+    public ShippingQuote calculate(PricingOrder order, double discountedSubtotal) {
         if (PricingConfig.PROMO_FREE_DELIVERY.equals(order.promoCode())) {
             return freeCalculator.calculate(order, discountedSubtotal);
         }

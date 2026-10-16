@@ -1,9 +1,11 @@
-package store;
+package store.model;
+
+import java.util.Locale;
 
 /**
  * Delivery zones with their base fees (location-based rule).
  * The order-value rule (free delivery over a threshold) lives in
- * {@link OrderCalculator}.
+ * {@link store.service.OrderPricingService}.
  */
 public enum DeliveryZone {
 
@@ -33,7 +35,7 @@ public enum DeliveryZone {
             throw new IllegalArgumentException(
                     "Delivery zone must not be empty. Valid zones: A, B, C.");
         }
-        String norm = input.trim().toUpperCase().replace(" ", "_").replace("-", "_");
+        String norm = input.trim().toUpperCase(Locale.ROOT).replace(" ", "_").replace("-", "_");
         if (!norm.startsWith("ZONE_")) {
             norm = "ZONE_" + norm;
         }

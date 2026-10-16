@@ -2,8 +2,8 @@ package store.service;
 
 import org.junit.jupiter.api.Test;
 
-import store.domain.Payment;
-import store.domain.PaymentStatus;
+import store.model.Payment;
+import store.model.PaymentStatus;
 import store.exception.UnsupportedPaymentMethodException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

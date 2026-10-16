@@ -3,7 +3,7 @@ package store.repository;
 import java.util.List;
 import java.util.Optional;
 
-import store.domain.Product;
+import store.model.Product;
 
 /** Persistence boundary for products. Implementations can be in-memory or database-backed. */
 public interface ProductRepository {

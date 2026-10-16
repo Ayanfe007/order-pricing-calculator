@@ -1,4 +1,4 @@
-package store.domain;
+package store.model;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,17 +8,10 @@ import store.exception.ValidationException;
 import store.validation.OrderValidator;
 
 /**
- * The aggregate root of the domain model. A class because its state changes
- * through a guarded lifecycle:
- *
- *   PENDING -> CONFIRMED -> SHIPPED -> DELIVERED
- *   PENDING/CONFIRMED/SHIPPED -> CANCELLED
- *
- * Every state change is an encapsulated validation method: illegal moves
- * throw IllegalStateException with a message that explains the rule.
+ * The order aggregate owns its lifecycle, inventory reservations, refunds,
+ * delivery transitions, and customer loyalty side effects.
  */
 public final class Order {
-
     private final String orderId;
     private final Customer customer;
     private final List<OrderItem> items = new ArrayList<>();
@@ -32,32 +25,15 @@ public final class Order {
         this.customer = customer;
     }
 
-    public String orderId() {
-        return orderId;
-    }
-
-    public Customer customer() {
-        return customer;
-    }
-
-    public List<OrderItem> items() {
-        return List.copyOf(items);
-    }
-
-    public OrderStatus status() {
-        return status;
-    }
-
-    public Payment payment() {
-        return payment;
-    }
-
-    public Delivery delivery() {
-        return delivery;
-    }
+    public String orderId() { return orderId; }
+    public Customer customer() { return customer; }
+    public List<OrderItem> items() { return List.copyOf(items); }
+    public OrderStatus status() { return status; }
+    public Payment payment() { return payment; }
+    public Delivery delivery() { return delivery; }
 
     public double itemsTotal() {
-        double sum = 0;
+        double sum = 0.0;
         for (OrderItem item : items) {
             sum += item.lineTotal();
         }
@@ -79,7 +55,7 @@ public final class Order {
         if (newPayment == null) {
             throw new ValidationException("Cannot attach a null payment.");
         }
-        this.payment = newPayment;
+        payment = newPayment;
     }
 
     public void attachDelivery(Delivery newDelivery) {
@@ -87,7 +63,7 @@ public final class Order {
         if (newDelivery == null) {
             throw new ValidationException("Cannot attach a null delivery.");
         }
-        this.delivery = newDelivery;
+        delivery = newDelivery;
     }
 
     public void confirm() {
@@ -99,7 +75,7 @@ public final class Order {
         status = OrderStatus.CONFIRMED;
     }
 
-    /** Business rule: nothing ships until the payment is PAID and a delivery exists. */
+    /** No shipment is started unless payment is PAID and delivery exists. */
     public void ship() {
         requireStatus(OrderStatus.CONFIRMED, "ship");
         if (payment == null || !payment.isPaid()) {
@@ -124,8 +100,7 @@ public final class Order {
     /** Cancelling returns reserved stock and refunds a paid payment. */
     public void cancel() {
         if (status == OrderStatus.DELIVERED || status == OrderStatus.CANCELLED) {
-            throw new StateTransitionException(
-                    "A " + status + " order cannot be cancelled.");
+            throw new StateTransitionException("A " + status + " order cannot be cancelled.");
         }
         for (OrderItem item : items) {
             item.product().increaseStock(item.quantity());
@@ -134,25 +109,6 @@ public final class Order {
             payment.refund();
         }
         status = OrderStatus.CANCELLED;
-    }
-
-    /**
-     * Bridge into the Week-1 pricing engine: the domain model never re-implements
-     * pricing rules, it re-uses {@link store.OrderCalculator} as the single source
-     * of truth.
-     */
-    public store.PriceBreakdown priceBreakdown(store.OrderCalculator calculator, String promoCode) {
-        List<store.OrderItem> lines = new ArrayList<>();
-        for (OrderItem item : items) {
-            lines.add(new store.OrderItem(
-                    item.product().name(), item.product().unitPrice(), item.quantity()));
-        }
-        store.DeliveryZone zone = delivery != null
-                ? delivery.destination().zone()
-                : customer.address().zone();
-        store.Order pricingOrder =
-                new store.Order(lines, promoCode, customer.type(), zone);
-        return calculator.calculate(pricingOrder);
     }
 
     private void requireStatus(OrderStatus needed, String action) {

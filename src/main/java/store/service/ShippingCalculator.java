@@ -1,8 +1,8 @@
 package store.service;
 
-import store.Order;
+import store.model.PricingOrder;
 
 /** Strategy interface for calculating an order's delivery fee. */
 public interface ShippingCalculator {
-    ShippingQuote calculate(Order order, double discountedSubtotal);
+    ShippingQuote calculate(PricingOrder order, double discountedSubtotal);
 }

@@ -4,7 +4,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import store.domain.Order;
+import store.model.Order;
 import store.exception.ValidationException;
 
 /** Small in-memory order store; replacing it does not change the service API. */

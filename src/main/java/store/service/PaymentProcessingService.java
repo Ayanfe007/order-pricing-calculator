@@ -3,7 +3,7 @@ package store.service;
 import java.util.List;
 import java.util.Objects;
 
-import store.domain.Payment;
+import store.model.Payment;
 import store.exception.UnsupportedPaymentMethodException;
 import store.exception.ValidationException;
 

@@ -2,8 +2,8 @@ package store.service;
 
 import java.util.List;
 
-import store.Order;
-import store.PricingConfig;
+import store.model.PricingOrder;
+import store.util.PricingConfig;
 import store.util.PricingFormat;
 
 /** Applies percentage promo codes; FREESHIP is handled by the shipping strategy. */
@@ -14,7 +14,7 @@ public final class PromoCodeDiscountPolicy implements DiscountPolicy {
     }
 
     @Override
-    public DiscountQuote evaluate(Order order, double subtotal) {
+    public DiscountQuote evaluate(PricingOrder order, double subtotal) {
         String code = order.promoCode();
         double rate = rateFor(code);
         if (code.isEmpty()) {
