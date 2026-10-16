@@ -103,6 +103,39 @@ class DomainModelTest {
     }
 
     @Test
+    void failedDeliveryStartDoesNotPartiallyAdvanceOrderStatus() {
+        Order order = new Order("ORD-1", validCustomer());
+        order.addItem(new OrderItem(stockedProduct(), 1));
+        order.attachPayment(new Payment("CARD", 12000));
+        Delivery delivery = new Delivery(validAddress());
+        order.attachDelivery(delivery);
+        order.confirm();
+        order.payment().markPaid();
+        delivery.startTransit(); // simulate a conflicting update by another caller
+
+        assertThrows(IllegalStateException.class, order::ship);
+        assertEquals(OrderStatus.CONFIRMED, order.status());
+        assertEquals(DeliveryStatus.IN_TRANSIT, delivery.status());
+    }
+
+    @Test
+    void failedDeliveryCompletionDoesNotPartiallyDeliverOrder() {
+        Customer customer = validCustomer();
+        Order order = new Order("ORD-1", customer);
+        order.addItem(new OrderItem(stockedProduct(), 1));
+        order.attachPayment(new Payment("CARD", 12000));
+        order.attachDelivery(new Delivery(validAddress()));
+        order.confirm();
+        order.payment().markPaid();
+        order.ship();
+        order.delivery().markFailed();
+
+        assertThrows(IllegalStateException.class, order::deliver);
+        assertEquals(OrderStatus.SHIPPED, order.status());
+        assertEquals(0, customer.loyaltyPoints());
+    }
+
+    @Test
     void fullLifecycleReachesDeliveredAndEarnsLoyalty() {
         Customer ada = validCustomer();
         Order order = new Order("ORD-1", ada);

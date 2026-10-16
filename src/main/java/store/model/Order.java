@@ -86,15 +86,15 @@ public final class Order {
             throw new StateTransitionException(
                     "Order " + orderId + " cannot ship without a delivery.");
         }
-        status = OrderStatus.SHIPPED;
         delivery.startTransit();
+        status = OrderStatus.SHIPPED;
     }
 
     public void deliver() {
         requireStatus(OrderStatus.SHIPPED, "deliver");
-        status = OrderStatus.DELIVERED;
         delivery.markDelivered();
         customer.earnLoyaltyPoints(10 * items.size());
+        status = OrderStatus.DELIVERED;
     }
 
     /** Cancelling returns reserved stock and refunds a paid payment. */
